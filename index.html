@@ -11,6 +11,15 @@
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js').then((registration) => {
              console.log('ServiceWorker registered with scope:', registration.scope);
+             
+             // Unregister old or conflicting service workers just in case
+             navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    if (registration.active && !registration.active.scriptURL.endsWith('/sw.js')) {
+                        registration.unregister();
+                    }
+                } 
+            });
           }).catch((err) => {
              console.log('ServiceWorker registration failed: ', err);
           });
