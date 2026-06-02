@@ -2,12 +2,14 @@ import express from 'express';
 import path from 'path';
 import fs from 'fs';
 import multer from 'multer';
+import cors from 'cors';
 import { createServer as createViteServer } from 'vite';
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  app.use(cors());
   app.use(express.json());
 
   // Setup local data storage
@@ -46,6 +48,7 @@ async function startServer() {
 
   // --- API Endpoints ---
   app.post('/api/admin/login', (req, res) => {
+    console.log('Login attempt:', req.body);
     const { username, password } = req.body;
     if (username === 'emon' && password === 'emon@123') {
       res.json({ success: true, token: 'secret_admin_token' });
