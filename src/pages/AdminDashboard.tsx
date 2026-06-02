@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, UploadCloud, Trophy, CheckCircle2, Loader2 } from 'lucide-react';
 import { cn } from '../lib/utils';
