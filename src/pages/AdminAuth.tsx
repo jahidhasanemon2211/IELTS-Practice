@@ -28,13 +28,19 @@ export function AdminAuth() {
         body: JSON.stringify({ username, password })
       });
       
-      const data = await res.json();
-      
-      if (data.success) {
-        localStorage.setItem('admin_token', data.token);
-        navigate('/admin/dashboard');
+      const contentType = res.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const data = await res.json();
+        if (data.success) {
+          localStorage.setItem('admin_token', data.token);
+          navigate('/admin/dashboard');
+        } else {
+          setError(data.message || 'Invalid credentials');
+        }
       } else {
-        setError(data.message || 'Invalid credentials');
+        const text = await res.text();
+        console.error('Non-JSON response:', text);
+        setError(`Server returned non-JSON. See console. Status: ${res.status}`);
       }
     } catch (err: any) {
       console.error('Login error:', err);
