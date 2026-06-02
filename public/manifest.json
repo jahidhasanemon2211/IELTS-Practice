@@ -1,0 +1,20 @@
+{
+  "name": "IELTS REMI",
+  "short_name": "IELTS REMI",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#1e3a8a",
+  "icons": [
+    {
+      "src": "/routine.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/routine.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
