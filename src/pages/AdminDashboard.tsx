@@ -46,12 +46,19 @@ export function AdminDashboard() {
         body: formData,
       });
       
-      const data = await res.json();
-      if (res.ok && data.success) {
-        showSuccess(`Successfully uploaded to ${activeTab === 'ielts' ? 'IELTS Test' : 'Next Test Prep'}`);
-        form.reset();
+      const contentType = res.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showSuccess(`Successfully uploaded to ${activeTab === 'ielts' ? 'IELTS Test' : 'Next Test Prep'}`);
+          form.reset();
+        } else {
+          alert(data.message || 'Upload failed');
+        }
       } else {
-        alert(data.message || 'Upload failed');
+        const text = await res.text();
+        console.error('Non-JSON response:', text);
+        alert(`Server returned non-JSON. See console. Status: ${res.status}`);
       }
     } catch (err) {
       alert('Error connecting to server.');
