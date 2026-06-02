@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldAlert, ArrowRight, Loader2 } from 'lucide-react';
 
@@ -36,8 +36,9 @@ export function AdminAuth() {
       } else {
         setError(data.message || 'Invalid credentials');
       }
-    } catch (err) {
-      setError('Connection error. Is the server running?');
+    } catch (err: any) {
+      console.error('Login error:', err);
+      setError(`Connection error: ${err.message}`);
     } finally {
       setLoading(false);
     }
