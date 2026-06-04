@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Trophy, CalendarDays, User, Hash } from 'lucide-react';
+import { collection, query, getDocs, orderBy } from 'firebase/firestore';
+import { db } from '../firebase';
 import type { Result } from '../types';
 
 export function Results() {
@@ -7,16 +9,20 @@ export function Results() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/results')
-      .then((res) => res.json())
-      .then((data) => {
+    const fetchResults = async () => {
+      try {
+        const q = query(collection(db, 'results'), orderBy('createdAt', 'desc'));
+        const querySnapshot = await getDocs(q);
+        const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Result));
         setResults(data);
-        setLoading(false);
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error('Error fetching results:', err);
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+    
+    fetchResults();
   }, []);
 
   if (loading) {
