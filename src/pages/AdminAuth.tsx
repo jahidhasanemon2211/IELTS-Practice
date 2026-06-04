@@ -22,31 +22,16 @@ export function AdminAuth() {
     setError('');
 
     try {
-      const apiUrl = `${window.location.origin}/api/admin/login`;
-      console.log('Fetching:', apiUrl);
-      const res = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ username, password })
-      });
-      
-      const contentType = res.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        const data = await res.json();
-        if (data.success) {
-          localStorage.setItem('admin_token', data.token);
-          navigate('/admin/dashboard');
-        } else {
-          setError(data.message || 'Invalid credentials');
-        }
+      // Hardcoded login for simplicity since we moved to client-side Firebase
+      if (username === 'emon' && password === 'emon@123') {
+        localStorage.setItem('admin_token', 'secret_admin_token');
+        navigate('/admin/dashboard');
       } else {
-        console.error('Non-JSON response:', res.status);
-        setError(`Server returned an error (${res.status}). Ensure the dev server is active.`);
+        setError('Invalid credentials');
       }
     } catch (err: any) {
       console.error('Login error:', err);
-      setError(`Connection error: ${err.message}`);
+      setError(`Error: ${err.message}`);
     } finally {
       setLoading(false);
     }
