@@ -1,0 +1,19 @@
+import { initializeApp } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
+import { getAuth } from 'firebase/auth';
+
+const firebaseConfig = {
+  projectId: "emon-ai-chatbot",
+  appId: "1:1000406609451:web:a7e0f745f5dec6473c046e",
+  apiKey: "AIzaSyCajWXN3sNj59cFfgH0dpSfjoVyTvk-sRI",
+  authDomain: "emon-ai-chatbot.firebaseapp.com",
+  storageBucket: "emon-ai-chatbot.firebasestorage.app",
+  messagingSenderId: "1000406609451",
+  measurementId: ""
+};
+
+const app = initializeApp(firebaseConfig);
+export const db = getFirestore(app);
+export const storage = getStorage(app);
+export const auth = getAuth(app);
