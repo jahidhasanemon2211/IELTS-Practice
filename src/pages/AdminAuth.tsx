@@ -22,9 +22,12 @@ export function AdminAuth() {
     setError('');
 
     try {
-      const res = await fetch('/api/admin/login', {
+      const apiUrl = `${window.location.origin}/api/admin/login`;
+      console.log('Fetching:', apiUrl);
+      const res = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ username, password })
       });
       
@@ -38,9 +41,8 @@ export function AdminAuth() {
           setError(data.message || 'Invalid credentials');
         }
       } else {
-        const text = await res.text();
-        console.error('Non-JSON response:', text);
-        setError(`Server returned non-JSON. See console. Status: ${res.status}`);
+        console.error('Non-JSON response:', res.status);
+        setError(`Server returned an error (${res.status}). Ensure the dev server is active.`);
       }
     } catch (err: any) {
       console.error('Login error:', err);
