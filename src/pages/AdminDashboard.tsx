@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, UploadCloud, Trophy, CheckCircle2, Loader2 } from 'lucide-react';
+import { collection, addDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '../firebase';
 import { cn } from '../lib/utils';
 
 type Tab = 'ielts' | 'next-prep' | 'result';
@@ -34,36 +37,43 @@ export function AdminDashboard() {
     setLoading(true);
     setSuccessMsg('');
     
-    const token = localStorage.getItem('admin_token');
     const form = e.target as HTMLFormElement;
     const formData = new FormData(form);
-    formData.append('type', activeTab);
+    const title = formData.get('title') as string;
+    const thumbnailFile = formData.get('thumbnail') as File;
+    const pdfFile = formData.get('pdf') as File;
     
     try {
-      const apiUrl = `${window.location.origin}/api/tests`;
-      console.log('Fetching:', apiUrl);
-      const res = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        credentials: 'include',
-        body: formData,
-      });
-      
-      const contentType = res.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        const data = await res.json();
-        if (res.ok && data.success) {
-          showSuccess(`Successfully uploaded to ${activeTab === 'ielts' ? 'IELTS Test' : 'Next Test Prep'}`);
-          form.reset();
-        } else {
-          alert(data.message || 'Upload failed');
-        }
-      } else {
-        console.error('Non-JSON response received from server:', res.status);
-        alert(`Server error (${res.status}). Please try again.`);
+      let thumbnailUrl = '';
+      let pdfUrl = '';
+
+      if (thumbnailFile && thumbnailFile.name) {
+        const thumbRef = ref(storage, `thumbnails/${Date.now()}-${thumbnailFile.name}`);
+        await uploadBytes(thumbRef, thumbnailFile);
+        thumbnailUrl = await getDownloadURL(thumbRef);
       }
-    } catch (err) {
-      alert('Error connecting to server.');
+
+      if (pdfFile && pdfFile.name) {
+        const pdfRef = ref(storage, `pdfs/${Date.now()}-${pdfFile.name}`);
+        await uploadBytes(pdfRef, pdfFile);
+        pdfUrl = await getDownloadURL(pdfRef);
+      }
+
+      const newTest = {
+        title,
+        type: activeTab,
+        thumbnailUrl,
+        pdfUrl,
+        createdAt: new Date().toISOString()
+      };
+
+      await addDoc(collection(db, 'tests'), newTest);
+      
+      showSuccess(`Successfully uploaded to ${activeTab === 'ielts' ? 'IELTS Test' : 'Next Test Prep'}`);
+      form.reset();
+    } catch (err: any) {
+      console.error(err);
+      alert('Error uploading to Firebase: ' + err.message);
     } finally {
       setLoading(false);
     }
@@ -75,33 +85,25 @@ export function AdminDashboard() {
     setLoading(true);
     setSuccessMsg('');
     
-    const token = localStorage.getItem('admin_token');
     const form = e.target as HTMLFormElement;
     const formData = new FormData(form);
-    const body = Object.fromEntries(formData.entries());
-
+    
     try {
-      const apiUrl = `${window.location.origin}/api/results`;
-      console.log('Fetching:', apiUrl);
-      const res = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify(body),
-      });
+      const newResult = {
+        testName: formData.get('testName'),
+        date: formData.get('date'),
+        studentName: formData.get('studentName'),
+        score: formData.get('score'),
+        createdAt: new Date().toISOString()
+      };
+
+      await addDoc(collection(db, 'results'), newResult);
       
-      const data = await res.json();
-      if (res.ok && data.success) {
-        showSuccess('Result successfully published!');
-        form.reset();
-      } else {
-        alert(data.message || 'Optimization failed');
-      }
-    } catch (err) {
-      alert('Error connecting to server.');
+      showSuccess('Result successfully published!');
+      form.reset();
+    } catch (err: any) {
+      console.error(err);
+      alert('Error saving result: ' + err.message);
     } finally {
       setLoading(false);
     }
