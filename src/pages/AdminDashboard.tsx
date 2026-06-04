@@ -2,8 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, UploadCloud, Trophy, CheckCircle2, Loader2 } from 'lucide-react';
 import { collection, addDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '../firebase';
+import { db } from '../firebase';
 import { cn } from '../lib/utils';
 
 type Tab = 'ielts' | 'next-prep' | 'result';
@@ -13,6 +12,7 @@ export function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>('ielts');
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
   // Logout on mount if no token
   useEffect(() => {
@@ -36,29 +36,15 @@ export function AdminDashboard() {
     e.preventDefault();
     setLoading(true);
     setSuccessMsg('');
+    setErrorMsg('');
     
     const form = e.target as HTMLFormElement;
     const formData = new FormData(form);
     const title = formData.get('title') as string;
-    const thumbnailFile = formData.get('thumbnail') as File;
-    const pdfFile = formData.get('pdf') as File;
+    const thumbnailUrl = formData.get('thumbnail') as string;
+    const pdfUrl = formData.get('pdf') as string;
     
     try {
-      let thumbnailUrl = '';
-      let pdfUrl = '';
-
-      if (thumbnailFile && thumbnailFile.name) {
-        const thumbRef = ref(storage, `thumbnails/${Date.now()}-${thumbnailFile.name}`);
-        await uploadBytes(thumbRef, thumbnailFile);
-        thumbnailUrl = await getDownloadURL(thumbRef);
-      }
-
-      if (pdfFile && pdfFile.name) {
-        const pdfRef = ref(storage, `pdfs/${Date.now()}-${pdfFile.name}`);
-        await uploadBytes(pdfRef, pdfFile);
-        pdfUrl = await getDownloadURL(pdfRef);
-      }
-
       const newTest = {
         title,
         type: activeTab,
@@ -73,7 +59,7 @@ export function AdminDashboard() {
       form.reset();
     } catch (err: any) {
       console.error(err);
-      alert('Error uploading to Firebase: ' + err.message);
+      setErrorMsg(`Error uploading: Please ensure Firebase Storage is enabled in your Firebase Console. (${err.message})`);
     } finally {
       setLoading(false);
     }
@@ -84,6 +70,7 @@ export function AdminDashboard() {
     e.preventDefault();
     setLoading(true);
     setSuccessMsg('');
+    setErrorMsg('');
     
     const form = e.target as HTMLFormElement;
     const formData = new FormData(form);
@@ -103,7 +90,7 @@ export function AdminDashboard() {
       form.reset();
     } catch (err: any) {
       console.error(err);
-      alert('Error saving result: ' + err.message);
+      setErrorMsg('Error saving result: ' + err.message);
     } finally {
       setLoading(false);
     }
@@ -161,12 +148,18 @@ export function AdminDashboard() {
           
           {successMsg && (
             <div className="absolute top-6 left-6 right-6 bg-green-50 border border-green-200 text-green-700 p-4 rounded-lg flex items-center gap-3 animate-in slide-in-from-top-2">
-              <CheckCircle2 className="text-green-600" />
+              <CheckCircle2 className="text-green-600 shrink-0" />
               <span className="font-medium">{successMsg}</span>
             </div>
           )}
 
-          <div className={cn("max-w-2xl mx-auto transition-all", successMsg ? "mt-16" : "mt-0")}>
+          {errorMsg && (
+            <div className="absolute top-6 left-6 right-6 bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg flex gap-3 animate-in slide-in-from-top-2">
+              <span className="font-medium whitespace-pre-wrap">{errorMsg}</span>
+            </div>
+          )}
+
+          <div className={cn("max-w-2xl mx-auto transition-all", (successMsg || errorMsg) ? "mt-24" : "mt-0")}>
             
             {/* File Upload Variant Form */}
             {(activeTab === 'ielts' || activeTab === 'next-prep') && (
@@ -195,29 +188,29 @@ export function AdminDashboard() {
                   
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="thumbnail">
-                      Thumbnail Image (JPG/PNG)
+                      Thumbnail Image URL
                     </label>
                     <input
                       id="thumbnail"
                       name="thumbnail"
-                      type="file"
-                      accept="image/*"
+                      type="url"
+                      placeholder="https://example.com/image.png"
                       required
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 transition-colors text-sm text-slate-600"
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 border-t-4 border-t-slate-200/50 shadow-inner rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm"
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="pdf">
-                      PDF Document
+                      PDF Document URL
                     </label>
                     <input
                       id="pdf"
                       name="pdf"
-                      type="file"
-                      accept="application/pdf"
+                      type="url"
+                      placeholder="https://example.com/document.pdf"
                       required
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 transition-colors text-sm text-slate-600"
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 border-t-4 border-t-slate-200/50 shadow-inner rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm"
                     />
                   </div>
                 </div>
