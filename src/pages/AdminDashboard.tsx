@@ -40,9 +40,12 @@ export function AdminDashboard() {
     formData.append('type', activeTab);
     
     try {
-      const res = await fetch('/api/tests', {
+      const apiUrl = `${window.location.origin}/api/tests`;
+      console.log('Fetching:', apiUrl);
+      const res = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
+        credentials: 'include',
         body: formData,
       });
       
@@ -56,9 +59,8 @@ export function AdminDashboard() {
           alert(data.message || 'Upload failed');
         }
       } else {
-        const text = await res.text();
-        console.error('Non-JSON response:', text);
-        alert(`Server returned non-JSON. See console. Status: ${res.status}`);
+        console.error('Non-JSON response received from server:', res.status);
+        alert(`Server error (${res.status}). Please try again.`);
       }
     } catch (err) {
       alert('Error connecting to server.');
@@ -79,12 +81,15 @@ export function AdminDashboard() {
     const body = Object.fromEntries(formData.entries());
 
     try {
-      const res = await fetch('/api/results', {
+      const apiUrl = `${window.location.origin}/api/results`;
+      console.log('Fetching:', apiUrl);
+      const res = await fetch(apiUrl, {
         method: 'POST',
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify(body),
       });
       
