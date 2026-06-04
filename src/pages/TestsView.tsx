@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Download, FileText, Calendar } from 'lucide-react';
+import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { db } from '../firebase';
 import type { Test } from '../types';
 
 interface TestsViewProps {
@@ -12,35 +14,20 @@ export function TestsView({ type, title }: TestsViewProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/tests?type=${type}`)
-      .then((res) => res.json())
-      .then((data) => {
+    const fetchTests = async () => {
+      try {
+        const q = query(collection(db, 'tests'), where('type', '==', type), orderBy('createdAt', 'desc'));
+        const querySnapshot = await getDocs(q);
+        const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Test));
         setTests(data);
-        setLoading(false);
-        // Pre-cache PDFs and thumbnails for offline viewing
-        if ('caches' in window) {
-          caches.open('ielts-remi-v1').then((cache) => {
-            data.forEach((test: Test) => {
-              // Precache PDF
-              if (test.pdfUrl) {
-                cache.match(test.pdfUrl).then((cached) => {
-                  if (!cached) fetch(test.pdfUrl).then(response => cache.put(test.pdfUrl, response));
-                });
-              }
-              // Precache Thumbnail
-              if (test.thumbnailUrl) {
-                cache.match(test.thumbnailUrl).then((cached) => {
-                  if (!cached) fetch(test.thumbnailUrl).then(response => cache.put(test.thumbnailUrl, response));
-                });
-              }
-            });
-          });
-        }
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error('Error fetching tests:', err);
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+    
+    fetchTests();
   }, [type]);
 
   if (loading) {
